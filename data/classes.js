@@ -14,8 +14,8 @@ export const classes = [
     id: "cwops-intermediate",
     shortName: "CWA Intermediate",
     subtitle: "16 sessions · 10→25 WPM",
-    blurb: "CW Academy's Intermediate curriculum. Speed-building over eight weeks. (Lesson detail in progress.)",
-    status: "stub",
+    blurb: "CW Academy's Intermediate curriculum. Speed-building over eight weeks with daily practice files, callsign drills, and CWT events.",
+    status: "ready",
     loader: () => import("./cwops-intermediate.js"),
   },
 ];

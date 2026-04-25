@@ -251,8 +251,19 @@ def parse_sessions(html: str, audio: dict[str, str]) -> list[dict]:
             if day_idx + 1 < len(day_h3s):
                 day_end = day_h3s[day_idx + 1][0]
             else:
-                m = re.search(r"<h1[^>]*>\s*Appendix", html[day_inner_end:], flags=re.I)
-                day_end = day_inner_end + m.start() if m else len(html)
+                # Stop at the Appendix or Revision History — whichever comes
+                # first. The h1 markup has nested anchors so we anchor on
+                # the heading text directly.
+                tail = html[day_inner_end:]
+                candidates = [m.start() for m in (
+                    re.search(r"Appendix\s+A:", tail),
+                    re.search(r"Document Revision History", tail, re.I),
+                ) if m]
+                day_end = day_inner_end + min(candidates) if candidates else len(html)
+                # Walk back to the nearest opening <h1 to leave a clean cut.
+                back = html.rfind("<h1", day_inner_end, day_end)
+                if back != -1:
+                    day_end = back
             day_html = slice_between(html, day_inner_end, day_end)
             day_html = clean_inline(day_html)
             day_html = split_paragraphs(day_html)

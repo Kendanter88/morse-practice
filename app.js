@@ -68,6 +68,19 @@ function lessonProgress(classId, lessonId, total) {
   return { done, total, frac: total ? done / total : 0 };
 }
 
+function isDayDone(classId, lessonId, dayKey) {
+  return !!loadState()[classId]?.[lessonId]?.days?.[dayKey];
+}
+function setDayDone(classId, lessonId, dayKey, value) {
+  const s = loadState();
+  s[classId] ??= {};
+  s[classId][lessonId] ??= {};
+  s[classId][lessonId].days ??= {};
+  if (value) s[classId][lessonId].days[dayKey] = true;
+  else delete s[classId][lessonId].days[dayKey];
+  saveState(s);
+}
+
 // Track most-recent class+lesson so the landing page can offer "Resume".
 function rememberLast(classId, lessonId) {
   const s = loadState();
@@ -238,16 +251,24 @@ function renderClass(cls) {
   app.appendChild(el("h2", { class: "section" }, "Lessons"));
   const grid = el("div", { class: "grid" });
   for (const lesson of cls.lessons) {
-    const total = lesson.homework?.length || 0;
-    const prog = lessonProgress(cls.id, lesson.id, total);
+    const homeworkTotal = lesson.homework?.length || 0;
+    const prog = lessonProgress(cls.id, lesson.id, homeworkTotal);
     const card = el("a", { class: "card", href: `#/c/${cls.id}/lesson/${lesson.id}` });
     card.appendChild(el("h2", {}, `${lesson.id}. ${lesson.title}`));
-    card.appendChild(el("div", { class: "meta" },
-      `${lesson.exercises?.length || 0} exercises`,
-      total ? ` · ${prog.done}/${total} homework` : ""
-    ));
+
+    const metaParts = [];
+    if (lesson.days?.length) {
+      metaParts.push(`${lesson.days.length} days`);
+      const audioCount = lesson.days.flatMap((d) => d.tools || []).filter((t) => /\.mp3$/i.test(t.url)).length;
+      if (audioCount) metaParts.push(`${audioCount} audio files`);
+    } else if (lesson.exercises?.length) {
+      metaParts.push(`${lesson.exercises.length} exercises`);
+    }
+    if (homeworkTotal) metaParts.push(`${prog.done}/${homeworkTotal} homework`);
+    card.appendChild(el("div", { class: "meta" }, metaParts.join(" · ")));
+
     if (lesson.summary) card.appendChild(el("p", {}, lesson.summary));
-    if (total) {
+    if (homeworkTotal) {
       const bar = el("div", { class: "progress" },
         el("div", { class: "bar" }, el("span", { style: `width:${(prog.frac * 100).toFixed(0)}%` })),
       );
@@ -271,6 +292,11 @@ function renderIntro(cls) {
     const block = el("div", { class: "section" });
     block.appendChild(el("h2", {}, sec.heading));
     if (sec.body) block.appendChild(el("p", {}, sec.body));
+    if (sec.html) {
+      const wrap = el("div", { class: "rich" });
+      wrap.innerHTML = sec.html;
+      block.appendChild(wrap);
+    }
     if (sec.list) {
       const ul = el("ul");
       for (const [name, body] of sec.list) {
@@ -364,6 +390,60 @@ function renderLesson(cls, lessonId) {
       list.appendChild(li);
     });
     sec.appendChild(list);
+    app.appendChild(sec);
+  }
+
+  if (lesson.days?.length) {
+    const sec = el("section", { class: "section" });
+    sec.appendChild(el("h3", {}, "Daily practice"));
+    lesson.days.forEach((day, dayIdx) => {
+      const dayKey = `day-${dayIdx}`;
+      const block = el("div", { class: "day-block" });
+      const head = el("div", { class: "day-head" });
+      head.appendChild(el("h2", {}, day.label));
+      const dayChecked = isDayDone(cls.id, lesson.id, dayKey);
+      const dayCheck = el("label", { class: "day-done" },
+        el("input", {
+          type: "checkbox",
+          checked: dayChecked,
+          onChange: (e) => {
+            setDayDone(cls.id, lesson.id, dayKey, e.target.checked);
+            block.classList.toggle("done", e.target.checked);
+          },
+        }),
+        el("span", {}, "Done")
+      );
+      head.appendChild(dayCheck);
+      block.appendChild(head);
+      if (dayChecked) block.classList.add("done");
+
+      const body = el("div", { class: "rich" });
+      body.innerHTML = day.bodyHtml || "";
+      block.appendChild(body);
+
+      if (day.tools?.length) {
+        const toolList = el("ul", { class: "tool-strip" });
+        day.tools.forEach((t) => {
+          const isAudio = /\.mp3$/i.test(t.url);
+          toolList.appendChild(el("li", {},
+            el("a", {
+              class: `tool-chip${isAudio ? " audio" : ""}`,
+              href: t.url,
+              target: "_blank",
+              rel: "noopener",
+              title: t.url,
+            }, t.name, isAudio ? " ▶" : " ↗")
+          ));
+        });
+        const wrap = el("details", { class: "tool-wrap" },
+          el("summary", {}, `Quick links · ${day.tools.length}`),
+          toolList,
+        );
+        block.appendChild(wrap);
+      }
+
+      sec.appendChild(block);
+    });
     app.appendChild(sec);
   }
 

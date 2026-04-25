@@ -56,6 +56,29 @@ If your class is built from a PDF with hyperlink-bearing exercises, copy
 `_sources/build_class_data.py` and adjust the `LESSON_NARRATIVES` and the
 page-to-lesson mapping in `_sources/map_licw_links.py` to match your source.
 
+## Updating the CWA Intermediate class
+
+The CWA build runs from two source files: the curriculum HTML and the
+practice-files index page (which is where the audio mp3 URLs live).
+
+```bash
+# 1. Refresh the source HTML files
+curl -A "Mozilla/5.0" -o _sources/cwops-int.htm \
+  https://cwa.cwops.org/wp-content/uploads/Practice-Instructions-Intermediate-ver.2.2.htm
+curl -A "Mozilla/5.0" -o _sources/cwops-practice-files.htm \
+  https://cwops.org/intermediate-practice-files/
+
+# 2. Rebuild the audio file map
+python _sources/extract_practice_audio.py
+
+# 3. Regenerate the class data file
+python _sources/build_cwops_data.py
+```
+
+In-prose codes like `WD101-10`, `PR101-15`, `SS201-20` are auto-detected and
+turned into direct mp3 links during the build. The script reports how many
+audio files it linked.
+
 ## Updating the LICW class from the PDF
 
 If the LICW guide gets a new revision:

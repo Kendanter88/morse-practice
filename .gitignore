@@ -1,0 +1,11 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Working files generated during URL extraction (keep the scripts and PDF;
+# regenerate the JSON when the PDF changes)
+_sources/*.json
+_sources/__pycache__/

@@ -3,14 +3,6 @@
 
 export const classes = [
   {
-    id: "licw-overlearn-int1",
-    shortName: "LICW Overlearn — INT1 Prep",
-    subtitle: "Flow Foundations · 8 lessons",
-    blurb: "Long Island CW Club's bootcamp for transitioning into Intermediate 2. Focus: Flow over recognition.",
-    status: "ready",
-    loader: () => import("./licw-overlearn-int1.js"),
-  },
-  {
     id: "cwops-intermediate",
     shortName: "CWA Intermediate",
     subtitle: "16 sessions · 10→25 WPM",

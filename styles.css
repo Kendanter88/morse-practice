@@ -163,6 +163,41 @@ a.card:hover {
   margin-top: 1rem;
 }
 
+/* Home: classes (left) + extras (right). Stacks on narrow screens. */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 1rem;
+}
+@media (min-width: 760px) {
+  .home-grid { grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr); }
+}
+.home-classes > .grid { margin-top: 0; }
+
+.home-extras {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem 1rem;
+  box-shadow: var(--shadow);
+}
+.home-extras h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  color: var(--accent);
+}
+.extras-group { margin-top: 0.85rem; }
+.extras-group:first-of-type { margin-top: 0.25rem; }
+.extras-group h3 { margin: 0 0 0.4rem; }
+.extras-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.extras-item { margin: 0; }
+.extras-name { font-weight: 600; color: var(--fg); font-size: 0.95rem; }
+.extras-blurb { color: var(--fg-mute); font-size: 0.8rem; margin: 0.1rem 0 0.35rem; }
+.extras-item .tool-strip { margin-top: 0.35rem; }
+.extras-item > .tool-chip { margin-top: 0.35rem; }
+
 .section { margin: 1.5rem 0; }
 .section h3 { margin-bottom: 0.5rem; }
 

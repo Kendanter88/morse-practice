@@ -7,6 +7,7 @@
 //   #/c/<classId>/lesson/<n>          — lesson detail
 
 import { classes, loadClass } from "./data/classes.js";
+import { extras } from "./data/extras.js";
 
 const app = document.getElementById("app");
 
@@ -225,7 +226,62 @@ function renderHome() {
     }
     grid.appendChild(card);
   }
-  app.appendChild(grid);
+
+  const home = el("div", { class: "home-grid" });
+  home.appendChild(el("section", { class: "home-classes" }, grid));
+  home.appendChild(renderExtras());
+  app.appendChild(home);
+}
+
+function renderExtras() {
+  const aside = el("aside", { class: "home-extras" });
+  aside.appendChild(el("h2", {}, "Extra practice"));
+
+  const groups = [
+    { key: "copy", title: "Copy", items: extras.copy || [] },
+    { key: "sending", title: "Sending", items: extras.sending || [] },
+  ];
+
+  for (const g of groups) {
+    if (!g.items.length) continue;
+    const group = el("div", { class: "extras-group" });
+    group.appendChild(el("h3", {}, g.title));
+    const list = el("ul", { class: "extras-list" });
+    for (const item of g.items) {
+      const li = el("li", { class: "extras-item" });
+      li.appendChild(el("div", { class: "extras-name" }, item.name));
+      if (item.blurb) li.appendChild(el("div", { class: "extras-blurb" }, item.blurb));
+      if (item.speeds?.length) {
+        const chips = el("ul", { class: "tool-strip" });
+        for (const s of item.speeds) {
+          chips.appendChild(el("li", {},
+            el("a", {
+              class: "tool-chip audio",
+              href: encodeURI(s.url),
+              target: "_blank",
+              rel: "noopener",
+              title: `${item.name} · ${s.wpm} wpm`,
+            }, `${s.wpm} ▶`)
+          ));
+        }
+        li.appendChild(chips);
+      } else if (item.url) {
+        const isAudio = /\.mp3$/i.test(item.url);
+        li.appendChild(el("a", {
+          class: `tool-chip${isAudio ? " audio" : ""}`,
+          href: encodeURI(item.url),
+          target: "_blank",
+          rel: "noopener",
+          title: item.url,
+        }, isAudio ? "Listen ▶" : "Open PDF ↗"));
+      }
+      list.appendChild(li);
+    }
+    group.appendChild(list);
+    aside.appendChild(group);
+  }
+
+  return aside;
 }
 
 function renderClass(cls) {

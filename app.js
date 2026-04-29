@@ -135,6 +135,7 @@ function parseHash() {
   const h = location.hash.replace(/^#/, "") || "/";
   const parts = h.split("/").filter(Boolean);
   if (parts.length === 0) return { route: "home" };
+  if (parts[0] === "extras") return { route: "extras" };
   if (parts[0] === "c" && parts[1]) {
     const classId = parts[1];
     if (parts[2] === "intro") return { route: "intro", classId };
@@ -153,6 +154,7 @@ async function render() {
   app.appendChild(el("p", { class: "loading" }, "Loading…"));
   try {
     if (r.route === "home") return renderHome();
+    if (r.route === "extras") return renderExtrasPage();
     const cls = await loadClass(r.classId);
     if (!cls) return renderNotFound();
     if (r.route === "class") return renderClass(cls);
@@ -227,15 +229,24 @@ function renderHome() {
     grid.appendChild(card);
   }
 
-  const home = el("div", { class: "home-grid" });
-  home.appendChild(el("section", { class: "home-classes" }, grid));
-  home.appendChild(renderExtras());
-  app.appendChild(home);
+  const copyCount = (extras.copy || []).length;
+  const sendCount = (extras.sending || []).length;
+  if (copyCount + sendCount > 0) {
+    const card = el("a", { class: "card", href: "#/extras" });
+    card.appendChild(el("h2", {}, "Extra practice"));
+    card.appendChild(el("div", { class: "meta" }, `${copyCount} copy · ${sendCount} sending`));
+    card.appendChild(el("p", {}, "Standalone copy audio and sending exercises that aren't tied to a class lesson."));
+    grid.appendChild(card);
+  }
+
+  app.appendChild(grid);
 }
 
-function renderExtras() {
-  const aside = el("aside", { class: "home-extras" });
-  aside.appendChild(el("h2", {}, "Extra practice"));
+function renderExtrasPage() {
+  clear(app);
+  app.appendChild(crumbs([{ label: "Classes", href: "#/" }, { label: "Extra practice" }]));
+  app.appendChild(el("h1", {}, "Extra practice"));
+  app.appendChild(el("p", { class: "subtitle" }, "Copy audio and sending exercises outside of any specific class."));
 
   const groups = [
     { key: "copy", title: "Copy", items: extras.copy || [] },
@@ -244,8 +255,8 @@ function renderExtras() {
 
   for (const g of groups) {
     if (!g.items.length) continue;
-    const group = el("div", { class: "extras-group" });
-    group.appendChild(el("h3", {}, g.title));
+    const sec = el("section", { class: "section" });
+    sec.appendChild(el("h3", {}, g.title));
     const list = el("ul", { class: "extras-list" });
     for (const item of g.items) {
       const li = el("li", { class: "extras-item" });
@@ -277,11 +288,9 @@ function renderExtras() {
       }
       list.appendChild(li);
     }
-    group.appendChild(list);
-    aside.appendChild(group);
+    sec.appendChild(list);
+    app.appendChild(sec);
   }
-
-  return aside;
 }
 
 function renderClass(cls) {

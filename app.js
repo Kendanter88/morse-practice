@@ -82,6 +82,27 @@ function setDayDone(classId, lessonId, dayKey, value) {
   saveState(s);
 }
 
+function isLessonComplete(classId, lessonId) {
+  return !!loadState()[classId]?.[lessonId]?.complete;
+}
+function setLessonComplete(classId, lessonId, value) {
+  const s = loadState();
+  s[classId] ??= {};
+  s[classId][lessonId] ??= {};
+  if (value) s[classId][lessonId].complete = true;
+  else delete s[classId][lessonId].complete;
+  saveState(s);
+}
+function isLessonAllChecked(classId, lesson) {
+  const homeworkTotal = lesson.homework?.length || 0;
+  const daysTotal = lesson.days?.length || 0;
+  if (homeworkTotal + daysTotal === 0) return false;
+  const ls = loadState()[classId]?.[lesson.id] || {};
+  const homeworkDone = Object.values(ls.homework || {}).filter(Boolean).length;
+  const daysDone = Object.values(ls.days || {}).filter(Boolean).length;
+  return homeworkDone === homeworkTotal && daysDone === daysTotal;
+}
+
 // Track most-recent class+lesson so the landing page can offer "Resume".
 function rememberLast(classId, lessonId) {
   const s = loadState();
@@ -318,8 +339,38 @@ function renderClass(cls) {
   for (const lesson of cls.lessons) {
     const homeworkTotal = lesson.homework?.length || 0;
     const prog = lessonProgress(cls.id, lesson.id, homeworkTotal);
-    const card = el("a", { class: "card", href: `#/c/${cls.id}/lesson/${lesson.id}` });
-    card.appendChild(el("h2", {}, `${lesson.id}. ${lesson.title}`));
+    const complete = isLessonComplete(cls.id, lesson.id);
+    const allChecked = isLessonAllChecked(cls.id, lesson);
+
+    const cardClasses = ["card", "lesson-card"];
+    if (complete) cardClasses.push("complete");
+    else if (allChecked) cardClasses.push("ready");
+    const card = el("a", { class: cardClasses.join(" "), href: `#/c/${cls.id}/lesson/${lesson.id}` });
+
+    const head = el("div", { class: "lesson-card-head" });
+    head.appendChild(el("h2", {}, `${lesson.id}. ${lesson.title}`));
+
+    const stop = (e) => { e.stopPropagation(); };
+    const cb = el("input", {
+      type: "checkbox",
+      checked: complete,
+      "aria-label": `Mark lesson ${lesson.id} complete`,
+      onClick: stop,
+      onChange: (e) => {
+        e.stopPropagation();
+        setLessonComplete(cls.id, lesson.id, e.target.checked);
+        card.classList.toggle("complete", e.target.checked);
+        if (e.target.checked) card.classList.remove("ready");
+        else if (isLessonAllChecked(cls.id, lesson)) card.classList.add("ready");
+      },
+    });
+    const label = el("label", {
+      class: "lesson-complete",
+      title: complete ? "Mark lesson incomplete" : (allChecked ? "All items checked — mark lesson complete" : "Mark lesson complete"),
+      onClick: stop,
+    }, cb, el("span", {}, "Done"));
+    head.appendChild(label);
+    card.appendChild(head);
 
     const metaParts = [];
     if (lesson.days?.length) {

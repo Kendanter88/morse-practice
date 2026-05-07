@@ -106,6 +106,19 @@ code, kbd { font: 0.9em/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
   justify-content: center;
 }
 .iconbtn:hover { background: var(--bg-3); }
+.topbtn {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.topbtn:hover { background: var(--bg-3); border-color: var(--accent); color: var(--accent); text-decoration: none; }
 
 main {
   flex: 1;
@@ -155,6 +168,41 @@ a.card:hover {
 .card .meta { color: var(--fg-mute); font-size: 0.85rem; margin-bottom: 0.5rem; }
 .card p { color: var(--fg-dim); margin: 0; }
 .card .progress { margin-top: 0.6rem; }
+
+.lesson-card-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.lesson-card-head h2 { margin: 0 0 0.25rem; flex: 1; min-width: 0; }
+.lesson-complete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 0.8rem;
+  color: var(--fg-mute);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.lesson-complete:hover { background: var(--bg-3); border-color: var(--border); color: var(--fg); }
+.lesson-complete input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 0;
+}
+.lesson-card.complete {
+  border-color: var(--good);
+  background: color-mix(in srgb, var(--good) 8%, var(--bg-2));
+}
+.lesson-card.complete h2 { color: var(--fg-dim); }
+.lesson-card.ready { border-color: var(--accent); }
+.lesson-card.ready .lesson-complete { color: var(--accent); }
 
 .grid {
   display: grid;

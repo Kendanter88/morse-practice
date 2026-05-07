@@ -82,6 +82,20 @@ function setDayDone(classId, lessonId, dayKey, value) {
   saveState(s);
 }
 
+function isDayItemChecked(classId, lessonId, dayKey, itemIdx) {
+  return !!loadState()[classId]?.[lessonId]?.dayItems?.[dayKey]?.[itemIdx];
+}
+function setDayItemChecked(classId, lessonId, dayKey, itemIdx, value) {
+  const s = loadState();
+  s[classId] ??= {};
+  s[classId][lessonId] ??= {};
+  s[classId][lessonId].dayItems ??= {};
+  s[classId][lessonId].dayItems[dayKey] ??= {};
+  if (value) s[classId][lessonId].dayItems[dayKey][itemIdx] = true;
+  else delete s[classId][lessonId].dayItems[dayKey][itemIdx];
+  saveState(s);
+}
+
 function isLessonComplete(classId, lessonId) {
   return !!loadState()[classId]?.[lessonId]?.complete;
 }
@@ -146,6 +160,16 @@ function clear(node) {
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Parse a day's bodyHtml into one array of inline child nodes per <p>.
+// Falls back to a single item containing all nodes if there are no <p>s.
+function parseDayItems(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  const paragraphs = Array.from(tmp.children).filter((c) => c.tagName === "P");
+  if (!paragraphs.length) return [];
+  return paragraphs.map((p) => Array.from(p.childNodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -533,9 +557,27 @@ function renderLesson(cls, lessonId) {
       block.appendChild(head);
       if (dayChecked) block.classList.add("done");
 
-      const body = el("div", { class: "rich" });
-      body.innerHTML = day.bodyHtml || "";
-      block.appendChild(body);
+      const items = parseDayItems(day.bodyHtml || "");
+      if (items.length) {
+        const list = el("ul", { class: "checklist day-items" });
+        items.forEach((nodes, idx) => {
+          const cb = el("input", {
+            type: "checkbox",
+            checked: isDayItemChecked(cls.id, lesson.id, dayKey, idx),
+            onChange: (e) => {
+              setDayItemChecked(cls.id, lesson.id, dayKey, idx, e.target.checked);
+            },
+          });
+          const text = el("span", { class: "text" });
+          for (const n of nodes) text.appendChild(n);
+          list.appendChild(el("li", {}, el("label", {}, cb, text)));
+        });
+        block.appendChild(list);
+      } else {
+        const body = el("div", { class: "rich" });
+        body.innerHTML = day.bodyHtml || "";
+        block.appendChild(body);
+      }
 
       if (day.tools?.length) {
         const toolList = el("ul", { class: "tool-strip" });
